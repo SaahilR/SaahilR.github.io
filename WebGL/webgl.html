@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>WebGL_Tutorial</title>
+    <link href="css/default.css" rel="stylesheet" />
+    <script src="js/gl-matrix.js"></script>
+    <script src="js/shader.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/texture.js"></script>
+</head>
+<body>
+    <h2>Example WebGL Application</h2>
+    Controls:
+    <p>
+        WASD - Move<br />
+        Mouse - Look<br />
+    </p>
+
+    <canvas id="renderCanvas" width="960" height="540"></canvas>
+    <script src="js/main.js"></script>
+
+    <script id="mainVertShader" type="vertShader">
+        #version 300 es
+
+        in vec3 position;
+        in vec3 normal;
+        in vec2 texCoord;
+
+        uniform mat4 uProjection;
+        uniform mat4 uView;
+        uniform mat4 uModel;
+
+        out vec3 fragPos;
+        out vec2 fragCoord;
+        out mat3 fragTBN;
+
+        void main() {
+        gl_Position = uProjection * uView * uModel * vec4(position, 1.0);
+        fragPos = position;
+
+
+        vec3 tangent = cross(normal, vec3(0.0f, 1.0f, 0.0f));
+        if(length(tangent) == 0.0f) tangent = cross(normal, vec3(0.0f, 0.0f, 1.0f));
+
+        fragTBN = mat3(normalize(tangent), normalize(cross(normal, tangent)), normal);
+        fragCoord = texCoord;
+        }
+    </script>
+
+    <script id="mainFragShader" type="fragShader">
+        #version 300 es
+        precision mediump float;
+
+        in vec3 fragPos;
+        in vec2 fragCoord;
+        in mat3 fragTBN;
+
+        uniform sampler2D uAlbedo;
+        uniform sampler2D uNormal;
+        uniform sampler2D uDisp;
+
+        uniform vec3 uLight;
+        uniform vec3 camPos;
+        out vec4 finalColor;
+
+        void main() {
+            vec3 V = normalize(camPos - fragPos);
+
+            vec3 normal = texture(uNormal, fragCoord).rgb;
+            vec3 albedo = texture(uAlbedo, fragCoord).rgb;
+
+
+            normal = normalize(normal * 2.0f - 1.0f);
+            normal = normalize(fragTBN * normal);
+
+            vec3 lightDir = normalize(uLight - fragPos);
+            float diff = max(dot(lightDir, normal), 0.0f);
+            vec3 diffuse = diff * albedo;
+
+            vec3 ambient = albedo * 0.1f;
+            finalColor = vec4(ambient + diffuse, 1.0f);
+        }
+    </script>
+</body>
+</html>

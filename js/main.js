@@ -99,9 +99,9 @@ function start() {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeIndices), gl.STATIC_DRAW);
 
-    var albedo_texture = loadTexture("textures/rock_albedo.jpg");
-    var normal_texture = loadTexture("textures/rock_normal.jpg");
-    var disp_texture = loadTexture("textures/rock_disp.jpg");
+    var albedo_texture = loadTexture("../textures/rock_albedo.jpg");
+    var normal_texture = loadTexture("../textures/rock_normal.jpg");
+    var disp_texture = loadTexture("../textures/rock_disp.jpg");
 
     // Shader Setup
     var shaderProgram = setupShader("mainVertShader", "mainFragShader");

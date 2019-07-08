@@ -1,6 +1,12 @@
 ﻿body {
-    background-color: #808080;
+  background-color: #E1E1E1;
+  margin:0;
   /* Uncomment this to enable scrolling and zooming
   touch-action: manipulation;
   */
+}
+
+canvas {
+  width:100%;
+  height:100%;
 }

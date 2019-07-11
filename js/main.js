@@ -33,33 +33,26 @@ function start() {
         }
     }
 
-    old_x = 0;
-    old_y = 0;
-
     function processMouse(e) {
         dx = e.movementX;
         dy = e.movementY;
 
         camera.yaw += 0.005 * dx;
         camera.pitch += -0.005 * dy;
-
-        old_x = e.pageX;
-        old_y = e.pageY;
-
         if (camera.pitch > Math.PI / 2) camera.pitch = Math.PI / 2;
         if (camera.pitch < -Math.PI / 2) camera.pitch = -Math.PI / 2;
     }
 
     var cubeVertices = [
-        -1.0, -1.0, -1.0,   0.0, 0.0, -1.0,  0.0, 0.0,
-		-1.0,  1.0, -1.0,   0.0, 0.0, -1.0,  0.0, 1.0,
-		 1.0,  1.0, -1.0,   0.0, 0.0, -1.0,  1.0, 1.0,
-		 1.0, -1.0, -1.0,   0.0, 0.0, -1.0,  1.0, 0.0,
+        -1.0, -1.0, -1.0,   0.0, 0.0, -1.0,  1.0, 0.0,
+		-1.0,  1.0, -1.0,   0.0, 0.0, -1.0,  1.0, 1.0,
+		 1.0,  1.0, -1.0,   0.0, 0.0, -1.0,  0.0, 1.0,
+		 1.0, -1.0, -1.0,   0.0, 0.0, -1.0,  0.0, 0.0,
 
-        -1.0, -1.0,  1.0,   0.0, 0.0, 1.0,   0.0, 0.0,
-		-1.0,  1.0,  1.0,   0.0, 0.0, 1.0,   0.0, 1.0,
-		 1.0,  1.0,  1.0,   0.0, 0.0, 1.0,   1.0, 1.0,
-		 1.0, -1.0,  1.0,   0.0, 0.0, 1.0,   1.0, 0.0,
+        -1.0, -1.0,  1.0,   0.0, 0.0, 1.0,   1.0, 0.0,
+		-1.0,  1.0,  1.0,   0.0, 0.0, 1.0,   1.0, 1.0,
+		 1.0,  1.0,  1.0,   0.0, 0.0, 1.0,   0.0, 1.0,
+		 1.0, -1.0,  1.0,   0.0, 0.0, 1.0,   0.0, 0.0,
 
 		 1.0, -1.0, -1.0,   1.0, 0.0, 0.0,   1.0, 0.0, // 8
 		 1.0, -1.0,  1.0,   1.0, 0.0, 0.0,   1.0, 1.0,
@@ -79,8 +72,12 @@ function start() {
         -1.0, -1.0, -1.0,   0.0,-1.0, 0.0,   1.0, 0.0, // 20
 		-1.0, -1.0,  1.0,   0.0,-1.0, 0.0,   1.0, 1.0,
 		 1.0, -1.0,  1.0,   0.0,-1.0, 0.0,   0.0, 1.0,
-		 1.0, -1.0, -1.0,   0.0,-1.0, 0.0,   0.0, 0.0 // 23
+		 1.0, -1.0, -1.0,   0.0, -1.0, 0.0,  0.0, 0.0, // 23
 
+        -10.0, -2.0, -10.0,  0.0, 1.0, 0.0,  0.0, 0.0,
+        -10.0, -2.0,  10.0,  0.0, 1.0, 0.0,  0.0, 1.0,
+         10.0, -2.0,  10.0,  0.0, 1.0, 0.0,  1.0, 1.0,
+         10.0, -2.0, -10.0,  0.0, 1.0, 0.0,  1.0, 0.0
     ];
 
     var cubeIndices = [
@@ -90,7 +87,9 @@ function start() {
 		12, 14, 13, 12, 15, 14, // Left
 		16, 18, 17, 16, 19, 18, // Top
 		20, 21, 22, 20, 22, 23, // Bottom
+        24, 25, 26, 24, 26, 27  // Plane
     ];
+
     var vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeVertices), gl.STATIC_DRAW);
@@ -99,9 +98,10 @@ function start() {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeIndices), gl.STATIC_DRAW);
 
-    var albedo_texture = loadTexture("../textures/rock_albedo.jpg");
+    var albedo_texture = loadTexture("../textures/color.png");
     var normal_texture = loadTexture("../textures/rock_normal.jpg");
-    var disp_texture = loadTexture("../textures/rock_disp.jpg");
+    var rough_texture = loadTexture("../textures/rough.png");
+    var metal_texture = loadTexture("../textures/metal.png");
 
     // Shader Setup
     var shaderProgram = setupShader("mainVertShader", "mainFragShader");
@@ -112,11 +112,11 @@ function start() {
     gl.bindVertexArray(vao);
 
     // Vertex attribute setup (position, color, and texture)
-    var positionAttributeLocation = gl.getAttribLocation(shaderProgram, "position");
+    var positionAttributeLocation = gl.getAttribLocation(shaderProgram, "aPosition");
     gl.enableVertexAttribArray(positionAttributeLocation);
-    var normalAttributeLocation = gl.getAttribLocation(shaderProgram, "normal");
+    var normalAttributeLocation = gl.getAttribLocation(shaderProgram, "aNormal");
     gl.enableVertexAttribArray(normalAttributeLocation);
-    var textureAttributeLocation = gl.getAttribLocation(shaderProgram, "texCoord");
+    var textureAttributeLocation = gl.getAttribLocation(shaderProgram, "aTexCoords");
     gl.enableVertexAttribArray(textureAttributeLocation);
 
     // Define rules for each vertex
@@ -137,19 +137,21 @@ function start() {
     mat4.translate(viewMatrix, viewMatrix, [0.5, 0.0, 0.0]);
 
     gl.useProgram(shaderProgram);
+
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, albedo_texture);
     setShader1i(shaderProgram, "uAlbedo", 0);
-
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, normal_texture);
     setShader1i(shaderProgram, "uNormal", 1);
-
     gl.activeTexture(gl.TEXTURE2);
-    gl.bindTexture(gl.TEXTURE_2D, disp_texture);
-    setShader1i(shaderProgram, "uDisp", 2);
+    gl.bindTexture(gl.TEXTURE_2D, rough_texture);
+    setShader1i(shaderProgram, "uRough", 2);
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, metal_texture);
+    setShader1i(shaderProgram, "uMetal", 3);
 
-    setShader3fv(shaderProgram, "uLight", -2, 10, -5)
+    setShader3fv(shaderProgram, "lightPos", -2, 10, -5)
     
     gl.enable(gl.DEPTH_TEST);
 
@@ -172,16 +174,15 @@ function start() {
         setShaderMat4fv(shaderProgram, "uView", viewMatrix);
         setShaderMat4fv(shaderProgram, "uModel", modelMatrix);
         
-        setShader3fv(shaderProgram, "camPos", camera.position);
-
-        setShader3fv(shaderProgram, "uLight", 2.0 * Math.sin(0.003 * time), 10.0, 2.0 * Math.cos(0.003 * time));
+        setShader3fv(shaderProgram, "viewPos", camera.position);
+        setShader3fv(shaderProgram, "lightPos", 8.0 * Math.sin(0.003 * time), 1.0, 8.0 * Math.cos(0.003 * time));
 
         // Start drawing proccess
         gl.useProgram(shaderProgram);
         gl.bindVertexArray(vao);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, 36 + 6, gl.UNSIGNED_SHORT, 0);
 
         requestAnimationFrame(runRenderLoop);
     }
